@@ -20,20 +20,21 @@ public class RequestResponse {
     protected String response_msg = "ok";
     protected HashMap<String,String> header = new HashMap<String, String>();
 
-    public RequestResponse(Socket socket) throws IOException {
+    public RequestResponse(Socket socket) throws Exception {
         this.socket = socket;
         try {
             this.inputStream = socket.getInputStream();
             this.outputStream = socket.getOutputStream();
             this.init();
         } catch (Exception e) {
-            e.printStackTrace();
             if(null != this.inputStream){
                 this.inputStream.close();
             }
             if(null != this.outputStream){
                 this.outputStream.close();
             }
+            throw e;
+
         }
         this.header.put("Content-Type","text/html;charset=utf-8\n");
     }
@@ -42,10 +43,10 @@ public class RequestResponse {
         byte[] inDataBox = new byte[2048];
         int inDataLength = 0;
         inDataLength = this.inputStream.read(inDataBox);
-        byte[] inData = Arrays.copyOf(inDataBox, inDataLength);
-        if(inDataLength==0){
-            throw new Exception("can not get request msg");
+        if(inDataLength < 0){
+            throw new Exception("can not get request data");
         }
+        byte[] inData = Arrays.copyOf(inDataBox, inDataLength);
         String inDataStr = new String(inData);
         //获取请求字符串
         String url = null;
@@ -71,6 +72,7 @@ public class RequestResponse {
             }
             this.outputStream.write("\n".getBytes());
             this.outputStream.write(content.getBytes());
+            this.outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

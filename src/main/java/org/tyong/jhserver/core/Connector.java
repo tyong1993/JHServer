@@ -1,30 +1,25 @@
 package org.tyong.jhserver.core;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * 连接器
  */
-public class Connector implements Runnable {
+public class Connector extends Thread {
     /**
      * 连接池
      */
-    public static ArrayList<Socket> connectPool = new ArrayList<Socket>();
-
+    public static volatile LinkedBlockingDeque<Socket> connectPool = new LinkedBlockingDeque<Socket>();
     /**
      * 初始化连接器
      */
     public void init() {
-        Thread thread = new Thread(this);
-        thread.start();
+        this.start();
     }
-
+    @Override
     public void run() {
         System.out.println("Connector start work...");
         Socket accept = null;
@@ -32,9 +27,11 @@ public class Connector implements Runnable {
             ServerSocket serverSocket = new ServerSocket(8080);
             while (true){
                 accept = serverSocket.accept();
-                connectPool.add(accept);
+                connectPool.put(accept);
             }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             if(null!= accept){
